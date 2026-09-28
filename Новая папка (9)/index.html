@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>❄️ Muz Saroyi — Ice Game</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    min-height:100vh;
+    background:
+        radial-gradient(circle at 20% 20%,#ffffff 0 2px,transparent 3px),
+        radial-gradient(circle at 80% 40%,#ffffff 0 2px,transparent 3px),
+        linear-gradient(135deg,#021d3d,#007bdc);
+    background-size:120px 120px,180px 180px,100%;
+    font-family:Arial,sans-serif;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.game{
+    width:min(1000px,100%);
+}
+
+.header{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.header h1{
+    font-size:clamp(32px,6vw,65px);
+    margin-bottom:8px;
+}
+
+.header p{
+    opacity:.8;
+}
+
+.scorebar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:rgba(255,255,255,.12);
+    backdrop-filter:blur(15px);
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:18px 18px 0 0;
+    padding:15px 20px;
+}
+
+.score{
+    font-size:20px;
+    font-weight:bold;
+}
+
+#gameCanvas{
+    display:block;
+    width:100%;
+    height:auto;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255,255,255,.85),
+            rgba(160,230,255,.7)
+        );
+    border-radius:0 0 22px 22px;
+    box-shadow:
+        0 30px 80px rgba(0,0,0,.3),
+        inset 0 0 80px rgba(255,255,255,.5);
+    touch-action:none;
+}
+
+.controls{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    margin-top:20px;
+}
+
+.control{
+    width:65px;
+    height:65px;
+    border:0;
+    border-radius:18px;
+    background:rgba(255,255,255,.16);
+    color:white;
+    font-size:28px;
+    backdrop-filter:blur(10px);
+    cursor:pointer;
+    user-select:none;
+}
+
+.control:active{
+    transform:scale(.92);
+    background:rgba(255,255,255,.3);
+}
+
+.start{
+    position:fixed;
+    inset:0;
+    background:rgba(0,20,50,.75);
+    backdrop-filter:blur(10px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:10;
+}
+
+.start.hidden{
+    display:none;
+}
+
+.start-box{
+    width:min(430px,90%);
+    text-align:center;
+    background:white;
+    color:#06325b;
+    padding:40px 30px;
+    border-radius:30px;
+    box-shadow:0 30px 80px rgba(0,0,0,.35);
+}
+
+.start-box .big{
+    font-size:70px;
+    margin-bottom:10px;
+}
+
+.start-box h2{
+    font-size:32px;
+    margin-bottom:10px;
+}
+
+.start-box p{
+    color:#61788d;
+    line-height:1.6;
+    margin-bottom:25px;
+}
+
+.start-btn{
+    border:0;
+    background:linear-gradient(135deg,#00a5ff,#0060d4);
+    color:white;
+    padding:15px 30px;
+    border-radius:14px;
+    font-size:17px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.result{
+    position:fixed;
+    inset:0;
+    background:rgba(0,20,50,.75);
+    backdrop-filter:blur(10px);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:20;
+}
+
+.result.show{
+    display:flex;
+}
+
+.result-box{
+    background:white;
+    color:#06325b;
+    width:min(430px,90%);
+    padding:40px;
+    text-align:center;
+    border-radius:30px;
+}
+
+.result-box h2{
+    font-size:35px;
+    margin-bottom:15px;
+}
+
+.final-score{
+    font-size:55px;
+    color:#008cff;
+    font-weight:900;
+    margin:15px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+    <div class="header">
+        <h1>❄️ Muz Saroyi</h1>
+        <p>⭐ Yulduzlarni yig‘ing va rekord o‘rnating!</p>
+    </div>
+
+    <div class="scorebar">
+
+        <div class="score">
+            ⭐ <span id="score">0</span>
+        </div>
+
+        <div>
+            ⏱️ <span id="time">60</span>
+        </div>
+
+        <div>
+            🏆 <span id="best">0</span>
+        </div>
+
+    </div>
+
+    <canvas id="gameCanvas"
+            width="900"
+            height="550">
+    </canvas>
+
+    <div class="controls">
+
+        <button class="control" id="left">⬅️</button>
+        <button class="control" id="up">⬆️</button>
+        <button class="control" id="down">⬇️</button>
+        <button class="control" id="right">➡️</button>
+
+    </div>
+
+</div>
+
+
+<!-- START -->
+
+<div class="start" id="start">
+
+    <div class="start-box">
+
+        <div class="big">⛸️</div>
+
+        <h2>Muz Saroyi</h2>
+
+        <p>
+            Qahramonni boshqaring va 60 soniya
+            ichida imkon qadar ko‘p ⭐ yulduz yig‘ing!
+        </p>
+
+        <button class="start-btn" onclick="startGame()">
+            O‘YINNI BOSHLASH
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- RESULT -->
+
+<div class="result" id="result">
+
+    <div class="result-box">
+
+        <div style="font-size:60px">🏆</div>
+
+        <h2>O‘yin tugadi!</h2>
+
+        <div class="final-score" id="finalScore">
+            0
+        </div>
+
+        <p>
+            Sizning natijangiz
+        </p>
+
+        <br>
+
+        <button class="start-btn"
+                onclick="restartGame()">
+            QAYTA O‘YNASH
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const canvas =
+document.getElementById("gameCanvas");
+
+const ctx =
+canvas.getContext("2d");
+
+
+/* GAME */
+
+let player;
+let stars=[];
+let obstacles=[];
+
+let score=0;
+let time=60;
+let gameRunning=false;
+
+let keys={};
+
+let timer;
+
+
+/* BEST SCORE */
+
+let best=
+Number(localStorage.getItem("muzBest") || 0);
+
+document.getElementById("best").textContent=best;
+
+
+/* PLAYER */
+
+function createPlayer(){
+
+    return {
+        x:450,
+        y:275,
+        size:32,
+        speed:6
+    };
+
+}
+
+
+/* STAR */
+
+function createStar(){
+
+    return {
+        x:Math.random()*820+40,
+        y:Math.random()*470+40,
+        size:15,
+        rotation:Math.random()*Math.PI
+    };
+
+}
+
+
+/* OBSTACLE */
+
+function createObstacle(){
+
+    return {
+        x:Math.random()*780+50,
+        y:Math.random()*430+60,
+        size:30
+    };
+
+}
+
+
+/* START GAME */
+
+function startGame(){
+
+    document
+    .getElementById("start")
+    .classList.add("hidden");
+
+    score=0;
+    time=60;
+
+    player=createPlayer();
+
+    stars=[];
+
+    obstacles=[];
+
+    for(let i=0;i<5;i++){
+        stars.push(createStar());
+    }
+
+    for(let i=0;i<5;i++){
+        obstacles.push(createObstacle());
+    }
+
+    document
+    .getElementById("score")
+    .textContent=score;
+
+    document
+    .getElementById("time")
+    .textContent=time;
+
+    gameRunning=true;
+
+    clearInterval(timer);
+
+    timer=setInterval(()=>{
+
+        if(!gameRunning)return;
+
+        time--;
+
+        document
+        .getElementById("time")
+        .textContent=time;
+
+        if(time<=0){
+            endGame();
+        }
+
+    },1000);
+
+    requestAnimationFrame(gameLoop);
+
+}
+
+
+/* END */
+
+function endGame(){
+
+    gameRunning=false;
+
+    clearInterval(timer);
+
+    if(score>best){
+
+        best=score;
+
+        localStorage
+        .setItem("muzBest",best);
+
+        document
+        .getElementById("best")
+        .textContent=best;
+    }
+
+    document
+    .getElementById("finalScore")
+    .textContent=score;
+
+    document
+    .getElementById("result")
+    .classList.add("show");
+
+}
+
+
+/* RESTART */
+
+function restartGame(){
+
+    document
+    .getElementById("result")
+    .classList.remove("show");
+
+    startGame();
+
+}
+
+
+/* KEYBOARD */
+
+window.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+});
+
+window.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+
+/* PLAYER MOVEMENT */
+
+function movePlayer(){
+
+    if(!player)return;
+
+    if(
+        keys["arrowleft"] ||
+        keys["a"]
+    ){
+        player.x-=player.speed;
+    }
+
+    if(
+        keys["arrowright"] ||
+        keys["d"]
+    ){
+        player.x+=player.speed;
+    }
+
+    if(
+        keys["arrowup"] ||
+        keys["w"]
+    ){
+        player.y-=player.speed;
+    }
+
+    if(
+        keys["arrowdown"] ||
+        keys["s"]
+    ){
+        player.y+=player.speed;
+    }
+
+
+    /* BORDERS */
+
+    player.x=
+    Math.max(
+        player.size,
+        Math.min(
+            canvas.width-player.size,
+            player.x
+        )
+    );
+
+    player.y=
+    Math.max(
+        player.size,
+        Math.min(
+            canvas.height-player.size,
+            player.y
+        )
+    );
+
+}
+
+
+/* TOUCH CONTROLS */
+
+function control(button,direction){
+
+    const down=()=>{
+        keys[direction]=true;
+    };
+
+    const up=()=>{
+        keys[direction]=false;
+    };
+
+    button.addEventListener("pointerdown",down);
+    button.addEventListener("pointerup",up);
+    button.addEventListener("pointerleave",up);
+    button.addEventListener("pointercancel",up);
+
+}
+
+
+control(
+    document.getElementById("left"),
+    "arrowleft"
+);
+
+control(
+    document.getElementById("right"),
+    "arrowright"
+);
+
+control(
+    document.getElementById("up"),
+    "arrowup"
+);
+
+control(
+    document.getElementById("down"),
+    "arrowdown"
+);
+
+
+/* COLLISION */
+
+function collision(a,b){
+
+    return Math.abs(a.x-b.x)
+        <
+        a.size+b.size
+        &&
+        Math.abs(a.y-b.y)
+        <
+        a.size+b.size;
+
+}
+
+
+/* DRAW ICE */
+
+function drawBackground(){
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    /* ICE */
+
+    const gradient=
+    ctx.createLinearGradient(
+        0,0,
+        canvas.width,
+        canvas.height
+    );
+
+    gradient.addColorStop(
+        0,
+        "#f9feff"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#bdeeff"
+    );
+
+    ctx.fillStyle=gradient;
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    /* ICE LINES */
+
+    ctx.strokeStyle=
+    "rgba(0,130,200,.12)";
+
+    ctx.lineWidth=2;
+
+    for(let x=0;x<canvas.width;x+=70){
+
+        ctx.beginPath();
+
+        ctx.moveTo(x,0);
+        ctx.lineTo(x,canvas.height);
+
+        ctx.stroke();
+
+    }
+
+    for(let y=0;y<canvas.height;y+=70){
+
+        ctx.beginPath();
+
+        ctx.moveTo(0,y);
+        ctx.lineTo(canvas.width,y);
+
+        ctx.stroke();
+
+    }
+
+
+    /* CIRCLE */
+
+    ctx.beginPath();
+
+    ctx.arc(
+        canvas.width/2,
+        canvas.height/2,
+        120,
+        0,
+        Math.PI*2
+    );
+
+    ctx.strokeStyle=
+    "rgba(0,110,200,.16)";
+
+    ctx.stroke();
+
+}
+
+
+/* DRAW PLAYER */
+
+function drawPlayer(){
+
+    ctx.save();
+
+    ctx.translate(
+        player.x,
+        player.y
+    );
+
+
+    /* shadow */
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        0,
+        20,
+        27,
+        8,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fillStyle=
+    "rgba(0,80,130,.18)";
+
+    ctx.fill();
+
+
+    /* body */
+
+    ctx.fillStyle="#ffffff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        5,
+        23,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* head */
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        -18,
+        17,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* hat */
+
+    ctx.fillStyle="#087ee5";
+
+    ctx.fillRect(
+        -18,
+        -35,
+        36,
+        7
+    );
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        -34,
+        11,
+        Math.PI,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* eyes */
+
+    ctx.fillStyle="#123";
+
+    ctx.beginPath();
+
+    ctx.arc(-6,-20,2.5,0,Math.PI*2);
+
+    ctx.fill();
+
+    ctx.beginPath();
+
+    ctx.arc(6,-20,2.5,0,Math.PI*2);
+
+    ctx.fill();
+
+
+    /* scarf */
+
+    ctx.fillStyle="#ff5b36";
+
+    ctx.fillRect(
+        -16,
+        -4,
+        32,
+        6
+    );
+
+
+    ctx.restore();
+
+}
+
+
+/* DRAW STAR */
+
+function drawStar(star){
+
+    ctx.save();
+
+    ctx.translate(
+        star.x,
+        star.y
+    );
+
+    star.rotation+=.03;
+
+    ctx.rotate(star.rotation);
+
+    ctx.fillStyle="#ffc400";
+
+    ctx.shadowColor="#fff000";
+
+    ctx.shadowBlur=15;
+
+    drawStarShape(
+        0,
+        0,
+        star.size,
+        star.size/2,
+        5
+    );
+
+    ctx.fill();
+
+    ctx.restore();
+
+}
+
+
+/* STAR SHAPE */
+
+function drawStarShape(
+    cx,
+    cy,
+    outer,
+    inner,
+    points
+){
+
+    let angle=
+    -Math.PI/2;
+
+    let step=
+    Math.PI/points;
+
+    ctx.beginPath();
+
+    for(
+        let i=0;
+        i<points*2;
+        i++
+    ){
+
+        const radius=
+        i%2===0
+        ?outer
+        :inner;
+
+        const x=
+        cx+
+        Math.cos(angle)*radius;
+
+        const y=
+        cy+
+        Math.sin(angle)*radius;
+
+        if(i===0){
+            ctx.moveTo(x,y);
+        }else{
+            ctx.lineTo(x,y);
+        }
+
+        angle+=step;
+
+    }
+
+    ctx.closePath();
+
+}
+
+
+/* DRAW OBSTACLES */
+
+function drawObstacles(){
+
+    obstacles.forEach(o=>{
+
+        ctx.save();
+
+        ctx.translate(
+            o.x,
+            o.y
+        );
+
+        ctx.fillStyle="#8adfff";
+
+        ctx.beginPath();
+
+        ctx.moveTo(0,-o.size);
+        ctx.lineTo(o.size,o.size);
+        ctx.lineTo(-o.size,o.size);
+        ctx.closePath();
+
+        ctx.fill();
+
+        ctx.strokeStyle="#fff";
+
+        ctx.stroke();
+
+        ctx.restore();
+
+    });
+
+}
+
+
+/* GAME LOOP */
+
+function gameLoop(){
+
+    if(!gameRunning)return;
+
+    movePlayer();
+
+    drawBackground();
+
+    drawObstacles();
+
+    stars.forEach(drawStar);
+
+    drawPlayer();
+
+
+    /* STAR COLLISION */
+
+    for(
+        let i=stars.length-1;
+        i>=0;
+        i--
+    ){
+
+        if(
+            collision(
+                player,
+                stars[i]
+            )
+        ){
+
+            score++;
+
+            document
+            .getElementById("score")
+            .textContent=score;
+
+            stars.splice(i,1);
+
+            stars.push(createStar());
+
+        }
+
+    }
+
+
+    /* OBSTACLE COLLISION */
+
+    obstacles.forEach(o=>{
+
+        if(
+            collision(player,o)
+        ){
+
+            player.x=450;
+            player.y=275;
+
+            score=Math.max(
+                0,
+                score-1
+            );
+
+            document
+            .getElementById("score")
+            .textContent=score;
+
+        }
+
+    });
+
+
+    requestAnimationFrame(gameLoop);
+
+}
+
+</script>
+
+</body>
+</html>
